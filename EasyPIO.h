@@ -627,7 +627,7 @@ void pioInit() {
       GPIO_BASE);     // Offset to GPIO peripheral
 
   if (reg_map == MAP_FAILED) {
-    printf("gpio mmap error %d\n", (int)reg_map);
+    printf("gpio mmap error %p\n", reg_map);
     close(mem_fd);
     exit(-1);
   }
@@ -646,7 +646,7 @@ void pioInit() {
       SPI0_BASE);     // Offset to SPI peripheral
 
   if (reg_map == MAP_FAILED) {
-    printf("spi mmap error %d\n", (int)reg_map);
+    printf("spi mmap error %p\n", reg_map);
     close(mem_fd);
     exit(-1);
   }
@@ -665,7 +665,7 @@ void pioInit() {
       PWM_BASE);      // Offset to PWM peripheral
 
   if (reg_map == MAP_FAILED) {
-    printf("pwm mmap error %d\n", (int)reg_map);
+    printf("pwm mmap error %p\n", reg_map);
     close(mem_fd);
     exit(-1);
   }
@@ -684,7 +684,7 @@ void pioInit() {
       SYS_TIMER_BASE); // Offset to Timer peripheral
 
   if (reg_map == MAP_FAILED) {
-    printf("sys timer mmap error %d\n", (int)reg_map);
+    printf("sys timer mmap error %p\n", reg_map);
     close(mem_fd);
     exit(-1);
   }
@@ -703,7 +703,7 @@ void pioInit() {
       ARM_TIMER_BASE); // Offset to interrupts
 
   if (reg_map == MAP_FAILED) {
-    printf("arm timer mmap error %d\n", (int)reg_map);
+    printf("arm timer mmap error %p\n", reg_map);
     close(mem_fd);
     exit(-1);
   }
@@ -722,7 +722,7 @@ void pioInit() {
       UART_BASE);     // Offset to UART peripheral
 
   if (reg_map == MAP_FAILED) {
-    printf("uart mmap error %d\n", (int)reg_map);
+    printf("uart mmap error %p\n", reg_map);
     close(mem_fd);
     exit(-1);
   }
@@ -741,7 +741,7 @@ void pioInit() {
       CM_PWM_BASE);   // Offset to ARM timer peripheral
 
   if (reg_map == MAP_FAILED) {
-    printf("cm_pwm mmap error %d\n", (int)reg_map);
+    printf("cm_pwm mmap error %p\n", reg_map);
     close(mem_fd);
     exit(-1);
   }
