@@ -1,15 +1,21 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <termios.h>
+#include <time.h>
 
 #include "EasyPIO.h"
+#include "header.h"
 
-struct termios modifyTerminalConfig(void);
+static struct termios orig_termios;
+
+void enable_raw_mode();
+void disable_raw_mode();
 void turnOff();
-void restoreTerminalConfig(struct termios);
-bool keyHit(int);
+int keyHit();
 int delay(int);
 void disp_binary(int);
+void carga_bateria();
+void ambulancia();
 void ledShow(unsigned char);
 void autoFantastico();
 void menu();
@@ -31,6 +37,12 @@ void menu() {
             case 1:
                 autoFantastico();
                 return;
+            case 2:
+                ambulancia();
+                return;
+            case 3:
+                carga_bateria();
+                return;
             default:
                 printf("Ingrese un numero válido\n");
         }
@@ -39,34 +51,38 @@ void menu() {
 
 void autoFantastico() {
     printf("Autofantastico!\n");
+    unsigned char output;
     while (1) {
-        unsigned char output = 0x80;
+        output = 0x80;  // 80 hex == 128 decimal
+        // ledShow(output);
         for (int i = 0; i < 8; i++) {
-            // ledShow(output);
             disp_binary(output);
             output = output >> 1;
-        };
-        output = 0x2;
-        for (int i = 0; i < 6; i++) {
-            // ledShow(output);
-            disp_binary(output);
-            output = output << 1;
-            if (delay(0) == 0) {
-                turnOff();
+            if (delay(1000) == 0) {
                 return;
+                // Call turnoff function
             }
         }
-    }
+
+        // output = 0x2;
+        // for (int i = 0; i < 6; i++) {
+        //     // ledShow(output);
+        //     disp_binary(output);
+        //     output = output << 1;
+        //     if (delay(0) == 0) {
+        //         return;
+        //     }
+        // }
+    };
     return;
 }
 
 void disp_binary(int i) {
-    int t;
-    for (t = 128; t > 0; t = t / 2)
-        if (i & t)
-            printf("1 ");
+    for (int t = 128; t > 0; t = t / 2)
+        if (i == t)  // si i y t son iguales
+            printf("* ");
         else
-            printf("0 ");
+            printf("_ ");
     fflush(stdout);
     printf("\r");
 }
@@ -78,78 +94,46 @@ void ledShow(unsigned char output) {
     return;
 }
 
-int delay(int index) {
-    int i;
-    for (i = delayTime[index]; i > 0; --i) {
-        if (keyHit(index)) {
+int delay(int d) {
+    int milli_seconds = 1000 * d;
+    enable_raw_mode();
+    clock_t start_time = clock();
+    while (clock() < start_time + milli_seconds) {
+        if (keyHit()) {
+            char c = getchar();
+            printf("You pressed: %d	 \n", c);
             return 0;
         }
     }
+    disable_raw_mode();
     return 1;
 }
 
-bool keyHit(int index) {
-    struct termios oldattr = modifyTerminalConfig();
-    int ch, oldf;
-
-    // setea el archivo descriptor del input estandar a que no se bloquee
-    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
-
-    // intenta leer un caracter de un input estandar
-    ch = getchar();
-
-    // cuando se presiona U
-    if (ch == 117) {  // ASCII para u
-        if (delayTime[index] > 1000) {
-            delayTime[index] = delayTime[index] - 1000;
-        }
-    }
-
-    // cuando se presiona D
-    if (ch == 100) {  // ASCII para d
-        delayTime[index] = delayTime[index] + 1000;
-    }
-
-    restoreTerminalConfig(oldattr);
-
-    // Restablece el archivo a modo descriptor
-    fcntl(STDIN_FILENO, F_SETFL, oldf);
-
-    // si se presiona escape devuelve 1
-    if (ch == 27) {
-        ungetc(ch, stdin);
-        return 1;
-    }
-
-    // si escape no se presiona devuelve 0
-    return 0;
+void enable_raw_mode() {
+    struct termios raw;
+    // 1. Get current terminal attributes
+    tcgetattr(STDIN_FILENO, &orig_termios);
+    // 2. Copy to modify
+    raw = orig_termios;
+    // 3. Turn off canonical mode and echo:
+    //    ICANON: disable line buffering
+    //    ECHO: disable echo
+    raw.c_lflag &= ~(ICANON | ECHO);
+    //    TCSANOW: apply changes immediately
+    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
 }
 
-void restoreTerminalConfig(struct termios oldattr) {
-    // restablece los atributos originales a la terminal
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldattr);
-}
+void disable_raw_mode() { tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios); }
 
-void turnOff() {
-    unsigned char off = 0x0;
-    ledShow(off);
-}
-
-struct termios modifyTerminalConfig(void) {
-    struct termios oldattr, newattr;
-
-    // obtiene los atributos de la terminal
-    tcgetattr(STDIN_FILENO, &oldattr);
-
-    // copia los atributos ya existenes a los nuevos
-    newattr = oldattr;
-
-    // desabilita el modo canonico y echo
-    newattr.c_lflag &= ~(ICANON | ECHO);
-
-    // aplica los nuevos atributos a la terminal
-    tcsetattr(STDIN_FILENO, TCSANOW, &newattr);
-
-    return oldattr;
+/*
+ * Returns 1 if a key has been pressed (and is waiting to read),
+ * 0 otherwise. Doesn’t block.
+ */
+int keyHit() {
+    struct timeval tv = {0L, 0L};
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
+    // select: check if stdin has data to read
+    return select(STDIN_FILENO + 1, &readfds, NULL, NULL, &tv) > 0;
 }
