@@ -14,10 +14,10 @@ void turnOff();
 int keyHit();
 int delay(int);
 void disp_binary(int);
-void carga_bateria();
-void ambulancia();
-void ledShow(unsigned char);
+extern void carga_bateria();
+extern void ambulancia();
 void autoFantastico();
+void ledShow(unsigned char);
 void menu();
 
 const unsigned char led[] = {14, 15, 18, 23, 24, 25, 8, 7};

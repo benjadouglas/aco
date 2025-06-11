@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "EasyPIO.h"
-#include "func_assembly.h"
+#include "header.h"
 
 #define PASSWORD_LENGTH 5
 
@@ -16,8 +16,8 @@ void getPassword(char *password);
 void menu();
 void autoFantastico();
 void choque();
-// void ambulancia();
-// void secuencia_formula1();
+void ambulancia();
+void carga_bateria();
 struct termios modifyTerminalConfig(void);
 void restoreTerminalConfig(struct termios);
 bool keyHit(int index);
@@ -96,7 +96,7 @@ void menu() {
         printf("*  1: Auto Fantastico       *\n");
         printf("*  2: El Choque             *\n");
         printf("*  3: Ambulancia            *\n");
-        printf("*  4: Formula 1             *\n");
+        printf("*  4: Carga bateria         *\n");
         printf("*  0: Salir                 *\n");
         printf("*                           *\n");
         printf("*****************************\n");
@@ -113,7 +113,7 @@ void menu() {
                 ambulancia();
                 break;
             case 4:
-                secuencia_formula1();
+                carga_bateria();
                 break;
             case 0:
                 break;

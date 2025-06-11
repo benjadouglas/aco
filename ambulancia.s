@@ -54,4 +54,3 @@ ambulanciad:
 .byte 0x4
 .byte 0x2
 .byte 0x1
-
