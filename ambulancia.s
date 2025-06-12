@@ -35,4 +35,4 @@ saltosd:
 .byte 0x3    @ Luces 1 y 2
 .byte 0xC0   @ Luces 7 y 8
 .byte 0xC    @ Luces 3 y 4
-.byte 0x28   @ Luces 5 y 7
+.byte 0x30   @ Luces 5 y 6

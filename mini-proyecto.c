@@ -50,16 +50,12 @@ void menu() {
     int opcion;
     do {
         clearInputBuffer();
-        printf("*****************************\n");
-        printf("*                           *\n");
-        printf("*  Seleccione una opcion:   *\n");
-        printf("*  1: Auto Fantastico       *\n");
-        printf("*  2: El Choque             *\n");
-        printf("*  3: Saltos                *\n");
-        printf("*  4: Carga bateria         *\n");
-        printf("*  0: Salir                 *\n");
-        printf("*                           *\n");
-        printf("*****************************\n");
+        printf("Seleccione una opcion:\n");
+        printf("1: Auto Fantastico    \n");
+        printf("2: El Choque          \n");
+        printf("3: Saltos             \n");
+        printf("4: Carga bateria      \n");
+        printf("0: Salir              \n");
         scanf("%d", &opcion);
 
         switch (opcion) {
@@ -85,8 +81,8 @@ void menu() {
 
 void autoFantastico() {
     printf("Presione esc para finalizar la secuencia\n");
-    printf("Presione U para aumentar la velocidad\n");
-    printf("Presione D para disminuir la velocidad\n");
+    printf("Presione flecha ARRIBA para aumentar la velocidad\n");
+    printf("Presione flecha ABAJO para disminuir la velocidad\n");
     printf("Auto Fantastico:\n");
 
     unsigned char output;
@@ -120,8 +116,8 @@ void autoFantastico() {
 
 void choque() {
     printf("Presione esc para finalizar la secuencia\n");
-    printf("Presione U para aumentar la velocidad\n");
-    printf("Presione D para disminuir la velocidad\n");
+    printf("Presione flecha ARRIBA para aumentar la velocidad\n");
+    printf("Presione flecha ABAJO para disminuir la velocidad\n");
     printf("Choque:\n");
 
     unsigned char output, aux1, aux2;
@@ -163,21 +159,29 @@ bool keyHit(int index) {
     oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
     fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
     ch = getchar();
-    if (ch == 117) {
-        if (delayTime[index] > 1000) {
-            delayTime[index] = delayTime[index] - 1000;
+    if (ch != EOF) {
+        if (ch == 27) {
+            int c1 = getchar();
+            if (c1 == '[') {
+                int c2 = getchar();
+                if (c2 == 'A') {
+                    if (delayTime[index] > 1000)
+                        delayTime[index] -= 1000;
+                } else if (c2 == 'B') {
+                    delayTime[index] += 1000;
+                }
+            } else {
+                if (c1 != EOF)
+                    ungetc(c1, stdin);
+                restoreTerminalConfig(oldattr);
+                fcntl(STDIN_FILENO, F_SETFL, oldf);
+                return true;
+            }
         }
-    }
-    if (ch == 100) {  // ASCII para d
-        delayTime[index] = delayTime[index] + 1000;
     }
     restoreTerminalConfig(oldattr);
     fcntl(STDIN_FILENO, F_SETFL, oldf);
-    if (ch == 27) {
-        ungetc(ch, stdin);
-        return 1;
-    }
-    return 0;
+    return false;
 }
 
 void pinSetup(void) {
