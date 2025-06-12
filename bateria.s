@@ -19,9 +19,11 @@ BL delay
 CMP R0, #0
 BEQ turn_off    // Si delay retorna 0, apagar y salir
 
-LSL R4, R4, #1  // Desplazar el patrón hacia la izquierda
-CMP R4, #0x100  // Verificar si hemos llegado al final
-BGE reset       // Si llegamos al final, reiniciar
+// Agregar el siguiente LED hacia la derecha
+LSR R5, R4, #1  // Desplazar el patrón actual una posición hacia la derecha
+ORR R4, R4, R5  // Combinar el patrón actual con el nuevo LED
+CMP R4, #0xFF   // Verificar si todos los LEDs están encendidos (8 LEDs = 0xFF)
+BGE reset       // Si llegamos al máximo, reiniciar
 
 B main_loop     // Continuar el ciclo principal
 

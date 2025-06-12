@@ -23,6 +23,7 @@ void keys();
 
 const unsigned char led[] = {14, 15, 18, 23, 24, 25, 8, 7};
 int delayTime[]           = {100000, 100000, 100000, 100000};
+int delaySpeed            = 1000;  // Default delay speed in milliseconds
 
 char getch() {
     char ch;
@@ -47,14 +48,18 @@ void keys() {
                     if (next == '[' && kbHit()) {
                         char arrow = getch();
                         switch (arrow) {
-                            case 'A':
-                                printf("\rSpeed increased, arrow UP (%c)  ",
-                                       arrow);
+                            case 'A':  // Up arrow
+                                if (delaySpeed > 100)
+                                    delaySpeed -= 100;
+                                printf("\rSpeed increased - Delay: %dms  ",
+                                       delaySpeed);
                                 fflush(stdout);
                                 break;
-                            case 'B':
-                                printf("\rSpeed decreased, arrow DOWN (%c)",
-                                       arrow);
+                            case 'B':  // Down arrow
+                                if (delaySpeed < 2000)
+                                    delaySpeed += 100;
+                                printf("\rSpeed decreased - Delay: %dms  ",
+                                       delaySpeed);
                                 fflush(stdout);
                                 break;
                         }
@@ -143,7 +148,7 @@ void showLed(unsigned char output) {
 }
 
 int delay(int d) {
-    int milli_seconds = 1000 * d;
+    int milli_seconds = delaySpeed * d;  // Use delaySpeed as multiplier
     enable_raw_mode();
     clock_t start_time = clock();
     while (clock() < start_time + milli_seconds) {
