@@ -16,8 +16,8 @@ void getPassword(char *password);
 void menu();
 void autoFantastico();
 void choque();
-void ambulancia();
-void carga_bateria();
+// void ambulancia();
+// void carga_bateria();
 struct termios modifyTerminalConfig(void);
 void restoreTerminalConfig(struct termios);
 bool keyHit(int index);
@@ -241,6 +241,7 @@ siguiente LED turnOff(); return;
     }
 }
 */
+
 struct termios modifyTerminalConfig(void) {
     struct termios oldattr, newattr;
 

@@ -4,28 +4,76 @@
 #include <time.h>
 
 #include "EasyPIO.h"
-#include "header.h"
+// #include "header.h"
 
 static struct termios orig_termios;
 
+void reset_terminal() { tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios); }
 void enable_raw_mode();
-void disable_raw_mode();
+int kbHit();
 void turnOff();
-int keyHit();
 int delay(int);
 void disp_binary(int);
-extern void carga_bateria();
-extern void ambulancia();
+// extern void carga_bateria();
+// extern void ambulancia();
 void autoFantastico();
-void ledShow(unsigned char);
+void showLed(unsigned char);
 void menu();
+void keys();
 
 const unsigned char led[] = {14, 15, 18, 23, 24, 25, 8, 7};
 int delayTime[]           = {100000, 100000, 100000, 100000};
 
+char getch() {
+    char ch;
+    read(STDIN_FILENO, &ch, 1);
+    return ch;
+}
+
 int main() {
     menu();
     return 0;
+}
+
+void keys() {
+    enable_raw_mode();
+    printf("Program running! Use arrow keys to control speed, 'q' to quit.\n");
+    while (1) {
+        if (kbHit()) {
+            char c = getch();
+            if (c == 27) {
+                if (kbHit()) {
+                    char next = getch();
+                    if (next == '[' && kbHit()) {
+                        char arrow = getch();
+                        switch (arrow) {
+                            case 'A':
+                                printf("\rSpeed increased, arrow UP (%c)  ",
+                                       arrow);
+                                fflush(stdout);
+                                break;
+                            case 'B':
+                                printf("\rSpeed decreased, arrow DOWN (%c)",
+                                       arrow);
+                                fflush(stdout);
+                                break;
+                        }
+                    }
+                }
+            } else {
+                if (c == 'q' || c == 'Q') {
+                    printf("\rExit                   ");
+                    fflush(stdout);
+                    break;
+                } else {
+                    printf("\rYou pressed: %c (ASCII: %d)", c, c);
+                    fflush(stdout);
+                }
+            }
+        }
+    }
+    reset_terminal();
+    return;
 }
 
 void menu() {
@@ -37,11 +85,11 @@ void menu() {
             case 1:
                 autoFantastico();
                 return;
-            case 2:
-                ambulancia();
-                return;
+            // case 2:
+            //     ambulancia();
+            //     return;
             case 3:
-                carga_bateria();
+                // carga_bateria();
                 return;
             default:
                 printf("Ingrese un numero válido\n");
@@ -87,7 +135,7 @@ void disp_binary(int i) {
     printf("\r");
 }
 
-void ledShow(unsigned char output) {
+void showLed(unsigned char output) {
     for (int j = 0; j < 8; j++) {
         digitalWrite(led[j], (output >> j) & 1);
     };
@@ -99,41 +147,42 @@ int delay(int d) {
     enable_raw_mode();
     clock_t start_time = clock();
     while (clock() < start_time + milli_seconds) {
-        if (keyHit()) {
+        if (kbHit()) {
             char c = getchar();
             printf("You pressed: %d	 \n", c);
             return 0;
         }
     }
-    disable_raw_mode();
+    reset_terminal();
     return 1;
 }
 
 void enable_raw_mode() {
-    struct termios raw;
-    // 1. Get current terminal attributes
     tcgetattr(STDIN_FILENO, &orig_termios);
-    // 2. Copy to modify
-    raw = orig_termios;
-    // 3. Turn off canonical mode and echo:
-    //    ICANON: disable line buffering
-    //    ECHO: disable echo
-    raw.c_lflag &= ~(ICANON | ECHO);
-    //    TCSANOW: apply changes immediately
-    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
-}
+    atexit(reset_terminal);
 
-void disable_raw_mode() { tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios); }
+    struct termios raw = orig_termios;
+    raw.c_lflag &= ~(ECHO | ICANON);  // Disable echo and canonical mode
+    raw.c_cc[VMIN]  = 0;              // Return immediately
+    raw.c_cc[VTIME] = 0;              // No timeout
+
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
 
 /*
  * Returns 1 if a key has been pressed (and is waiting to read),
  * 0 otherwise. Doesn’t block.
  */
-int keyHit() {
+int kbHit() {
     struct timeval tv = {0L, 0L};
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(STDIN_FILENO, &readfds);
     // select: check if stdin has data to read
     return select(STDIN_FILENO + 1, &readfds, NULL, NULL, &tv) > 0;
+}
+
+void turnOff() {
+    unsigned char off = 0x0;
+    showLed(off);
 }
